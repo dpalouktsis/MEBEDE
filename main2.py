@@ -12,13 +12,15 @@ class Model:
         self.unvisited = []
         self.matrix = []
         self.total_profit = 0
+        self.timecon = 0
+        self.dict = {}
 
     def max_profit(self):
         unvisited_length = len(self.unvisited)
         vehicles_length = len(self.allVehicles)
         while vehicles_length > 0:
-            for vindex in range(0, vehicles_length-1):
-                if self.allVehicles[vindex].q > 0 and self.allVehicles[vindex].t <= 200:
+            for vindex in range(0, vehicles_length - 1):
+                if self.allVehicles[vindex].q > 0 and self.allVehicles[vindex].t <= self.timecon:
                     vind = vindex
                     while unvisited_length > 0:
                         mp = -1
@@ -27,27 +29,37 @@ class Model:
                             if self.unvisited[index].p > mp:
                                 mp = self.unvisited[index].p
                                 ind = index  # keep index of customer that has it and return it
-                        self.visited.append(self.unvisited[ind])
                         dist = math.sqrt(math.pow(self.unvisited[ind].x - self.allVehicles[vind].x, 2) +
                                          math.pow(self.unvisited[ind].y - self.allVehicles[
-                                                                                               vind].y, 2))
-                        self.allVehicles[vind].t += self.unvisited[ind].st + dist
-                        self.allVehicles[vind].x = self.unvisited[ind].x
-                        self.allVehicles[vind].y = self.unvisited[ind].y
-                        self.allVehicles[vind].q -= self.unvisited[ind].d
-                        self.total_profit += self.unvisited[ind].p
-                        self.unvisited.pop(
-                            ind)  # remove the element from the unvisited list (This may need to be done later)
-                        unvisited_length = len(self.unvisited)
-                        mp = -1
-                        if self.allVehicles[vind].q <= 0 or self.allVehicles[vind].t > 200:
+                                             vind].y, 2))
+                        bigvar = self.allVehicles[vind].t + self.unvisited[ind].st + dist
+                        if self.unvisited[ind].d <= self.allVehicles[vind].q and bigvar <= self.timecon:
+                            self.allVehicles[vind].t += self.unvisited[ind].st + dist
+                            self.allVehicles[vind].x = self.unvisited[ind].x
+                            self.allVehicles[vind].y = self.unvisited[ind].y
+                            self.allVehicles[vind].q -= self.unvisited[ind].d
+                            self.total_profit += self.unvisited[ind].p
+                            self.visited.append(self.unvisited[ind])
+                            self.dict[ind] = self.visited #ΣΟΣ ΓΡΑΜΜΗ
+                            self.unvisited.pop(
+                                ind)  # remove the element from the unvisited list (This may need to be done later)
+                            unvisited_length = len(self.unvisited)
+                        else:
+                            self.print_route(self.allVehicles[vind].id)
                             self.allVehicles.pop(vind)
                             vehicles_length = len(self.allVehicles)
+                        mp = -1
         return self.total_profit
 
     def distance(self, x1, y1, x2, y2):
         d = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
         return d
+
+    def print_route(self, v1):
+        print('Route', v1)
+        visited_length = len(self.visited)
+        for o in range(0, visited_length):
+            print(self.visited[o].ID, end=' ')
 
     def BuildModel(self, n, k, Q, T, xdep, ydep):
         random.seed(10)
@@ -60,6 +72,8 @@ class Model:
         for i in range(0, totalVehicles):
             veh = Vehicles(i + 1, xdep, ydep, Q, 0)
             self.allVehicles.append(veh)
+
+        self.timecon = T
 
         for i in range(0, totalCustomers):
             x = random.randint(0, 100)
@@ -119,5 +133,3 @@ class Vehicles:
 m = Model()
 m.BuildModel(5, 2, 150, 200, 23.142, 11.736)
 print(m.max_profit())
-
-print('test')
